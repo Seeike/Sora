@@ -63,7 +63,7 @@ struct SearchView: View {
                                 .foregroundColor(.secondary)
                             Text("No Results Found")
                                 .font(.headline)
-                            Text("Try different keywords/titles")
+                            Text("Try different keywords")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }

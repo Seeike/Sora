@@ -27,9 +27,11 @@ struct MediaInfoView: View {
     @State var airdate: String = ""
     @State var episodeLinks: [EpisodeLink] = []
     @State var itemID: Int?
+    
     @State var isLoading: Bool = true
     @State var showFullSynopsis: Bool = false
-    @State var showedDrop: Bool = false
+    @State var hasFetched: Bool = false
+    @State var isRefetching: Bool = true
     
     @AppStorage("externalPlayer") private var externalPlayer: String = "Default"
     
@@ -179,6 +181,35 @@ struct MediaInfoView: View {
                                         }
                                 }
                             }
+                        } else {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Episodes")
+                                    .font(.system(size: 18))
+                                    .fontWeight(.bold)
+                            }
+                            VStack(spacing: 8) {
+                                if isRefetching {
+                                    ProgressView()
+                                        .padding()
+                                } else {
+                                    Image(systemName: "exclamationmark.triangle")
+                                        .font(.largeTitle)
+                                        .foregroundColor(.secondary)
+                                    HStack(spacing: 2) {
+                                        Text("No episodes Found:")
+                                            .foregroundColor(.secondary)
+                                        Button(action: {
+                                            isRefetching = true
+                                            fetchDetails()
+                                        }) {
+                                            Text("Retry")
+                                                .foregroundColor(.accentColor)
+                                        }
+                                    }
+                                }
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity)
                         }
                     }
                     .padding()
@@ -189,18 +220,18 @@ struct MediaInfoView: View {
             }
         }
         .onAppear {
-            if !showedDrop {
+            if !hasFetched {
                 DropManager.shared.showDrop(title: "Fetching Data", subtitle: "Please wait while fetching", duration: 1.0, icon: UIImage(systemName: "arrow.triangle.2.circlepath"))
-                showedDrop = true
-            }
-            fetchDetails()
-            fetchItemID(byTitle: title) { result in
-                switch result {
-                case .success(let id):
-                    itemID = id
-                case .failure(let error):
-                    Logger.shared.log("Failed to fetch Item ID: \(error)")
+                fetchDetails()
+                fetchItemID(byTitle: title) { result in
+                    switch result {
+                    case .success(let id):
+                        itemID = id
+                    case .failure(let error):
+                        Logger.shared.log("Failed to fetch Item ID: \(error)")
+                    }
                 }
+                hasFetched = true
             }
         }
     }
@@ -220,6 +251,7 @@ struct MediaInfoView: View {
                             }
                             self.episodeLinks = episodes
                             self.isLoading = false
+                            self.isRefetching = false
                         }
                     }
                     else {
@@ -231,11 +263,13 @@ struct MediaInfoView: View {
                             }
                             self.episodeLinks = episodes
                             self.isLoading = false
+                            self.isRefetching = false
                         }
                     }
                 } catch {
                     Logger.shared.log("Error loading module: \(error)", type: "Error")
                     self.isLoading = false
+                    self.isRefetching = false
                 }
             }
         }

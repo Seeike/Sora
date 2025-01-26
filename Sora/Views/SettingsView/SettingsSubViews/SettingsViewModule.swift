@@ -74,7 +74,7 @@ struct SettingsViewModule: View {
                         }
                         .disabled(selectedModuleId == module.id.uuidString)
                     }
-                    .swipeActions(edge: .trailing) {
+                    .swipeActions {
                         if selectedModuleId != module.id.uuidString {
                             Button(role: .destructive) {
                                 moduleManager.deleteModule(module)
