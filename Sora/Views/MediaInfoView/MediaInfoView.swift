@@ -34,10 +34,13 @@ struct MediaInfoView: View {
     @State var isRefetching: Bool = true
     
     @AppStorage("externalPlayer") private var externalPlayer: String = "Default"
+    @AppStorage("episodeChunkSize") private var episodeChunkSize: Int = 100
     
     @StateObject private var jsController = JSController()
     @EnvironmentObject var moduleManager: ModuleManager
     @EnvironmentObject private var libraryManager: LibraryManager
+    
+    @State private var selectedRange: Range<Int> = 0..<100
     
     var body: some View {
         Group {
@@ -164,11 +167,31 @@ struct MediaInfoView: View {
                         
                         if !episodeLinks.isEmpty {
                             VStack(alignment: .leading, spacing: 10) {
-                                Text("Episodes")
-                                    .font(.system(size: 18))
-                                    .fontWeight(.bold)
+                                HStack {
+                                    Text("Episodes")
+                                        .font(.system(size: 18))
+                                        .fontWeight(.bold)
+                                    
+                                    Spacer()
+                                    
+                                    if episodeLinks.count > episodeChunkSize {
+                                        Menu {
+                                            ForEach(generateRanges(), id: \.self) { range in
+                                                Button(action: {
+                                                    selectedRange = range
+                                                }) {
+                                                    Text("\(range.lowerBound + 1)-\(range.upperBound)")
+                                                }
+                                            }
+                                        } label: {
+                                            Text("\(selectedRange.lowerBound + 1)-\(selectedRange.upperBound)")
+                                                .font(.system(size: 14))
+                                                .foregroundColor(.accentColor)
+                                        }
+                                    }
+                                }
                                 
-                                ForEach(episodeLinks.indices, id: \.self) { i in
+                                ForEach(episodeLinks.indices.filter { selectedRange.contains($0) }, id: \.self) { i in
                                     let ep = episodeLinks[i]
                                     let lastPlayedTime = UserDefaults.standard.double(forKey: "lastPlayedTime_\(ep.href)")
                                     let totalTime = UserDefaults.standard.double(forKey: "totalTime_\(ep.href)")
@@ -233,7 +256,21 @@ struct MediaInfoView: View {
                 }
                 hasFetched = true
             }
+            selectedRange = 0..<episodeChunkSize
         }
+    }
+    
+    private func generateRanges() -> [Range<Int>] {
+        let chunkSize = episodeChunkSize
+        let totalEpisodes = episodeLinks.count
+        var ranges: [Range<Int>] = []
+        
+        for i in stride(from: 0, to: totalEpisodes, by: chunkSize) {
+            let end = min(i + chunkSize, totalEpisodes)
+            ranges.append(i..<end)
+        }
+        
+        return ranges
     }
     
     func fetchDetails() {

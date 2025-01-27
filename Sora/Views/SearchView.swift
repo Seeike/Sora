@@ -41,6 +41,9 @@ struct SearchView: View {
                     
                     if selectedModule == nil {
                         VStack(spacing: 8) {
+                            Image(systemName: "questionmark.app")
+                                .font(.largeTitle)
+                                .foregroundColor(.secondary)
                             Text("No Module Selected")
                                 .font(.headline)
                             Text("Please select a module from settings")

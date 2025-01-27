@@ -5,7 +5,6 @@
 //  Created by Francesco on 05/01/25.
 //
 
-import Drops
 import SwiftUI
 import Kingfisher
 
@@ -15,72 +14,88 @@ struct SettingsViewModule: View {
     
     @State private var errorMessage: String?
     @State private var isLoading = false
-    @State private var addedModuleUrl: String?
     
     var body: some View {
         VStack {
             Form {
-                ForEach(moduleManager.modules) { module in
-                    HStack {
-                        KFImage(URL(string: module.metadata.iconUrl))
-                            .resizable()
-                            .frame(width: 50, height: 50)
-                            .clipShape(Circle())
-                            .padding(.trailing, 10)
-                        
-                        VStack(alignment: .leading) {
-                            HStack(alignment: .bottom, spacing: 4) {
-                                Text(module.metadata.sourceName)
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                Text("v\(module.metadata.version)")
+                if moduleManager.modules.isEmpty {
+                    VStack(spacing: 8) {
+                        Image(systemName: "plus.app")
+                            .font(.largeTitle)
+                            .foregroundColor(.secondary)
+                        Text("No Modules")
+                            .font(.headline)
+                        Text("Click the plus button to add a module!")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                }
+                else {
+                    ForEach(moduleManager.modules) { module in
+                        HStack {
+                            KFImage(URL(string: module.metadata.iconUrl))
+                                .resizable()
+                                .frame(width: 50, height: 50)
+                                .clipShape(Circle())
+                                .padding(.trailing, 10)
+                            
+                            VStack(alignment: .leading) {
+                                HStack(alignment: .bottom, spacing: 4) {
+                                    Text(module.metadata.sourceName)
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                    Text("v\(module.metadata.version)")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                }
+                                Text("Author: \(module.metadata.author)")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                Text("Language: \(module.metadata.language)")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                             }
-                            Text("Author: \(module.metadata.author)")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            Text("Language: \(module.metadata.language)")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        if module.id.uuidString == selectedModuleId {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.accentColor)
-                                .frame(width: 25, height: 25)
-                        }
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        selectedModuleId = module.id.uuidString
-                    }
-                    .contextMenu {
-                        Button(action: {
-                            UIPasteboard.general.string = module.metadataUrl
-                            DropManager.shared.showDrop(title: "Copied to Clipboard", subtitle: "", duration: 1.0, icon: UIImage(systemName: "doc.on.clipboard.fill"))
-                        }) {
-                            Label("Copy URL", systemImage: "doc.on.doc")
-                        }
-                        Button(role: .destructive) {
-                            if selectedModuleId != module.id.uuidString {
-                                moduleManager.deleteModule(module)
-                                DropManager.shared.showDrop(title: "Module Removed", subtitle: "", duration: 1.0, icon: UIImage(systemName: "trash"))
+                            
+                            Spacer()
+                            
+                            if module.id.uuidString == selectedModuleId {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.accentColor)
+                                    .frame(width: 25, height: 25)
                             }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
                         }
-                        .disabled(selectedModuleId == module.id.uuidString)
-                    }
-                    .swipeActions {
-                        if selectedModuleId != module.id.uuidString {
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedModuleId = module.id.uuidString
+                        }
+                        .contextMenu {
+                            Button(action: {
+                                UIPasteboard.general.string = module.metadataUrl
+                                DropManager.shared.showDrop(title: "Copied to Clipboard", subtitle: "", duration: 1.0, icon: UIImage(systemName: "doc.on.clipboard.fill"))
+                            }) {
+                                Label("Copy URL", systemImage: "doc.on.doc")
+                            }
                             Button(role: .destructive) {
-                                moduleManager.deleteModule(module)
-                                DropManager.shared.showDrop(title: "Module Removed", subtitle: "", duration: 1.0, icon: UIImage(systemName: "trash"))
+                                if selectedModuleId != module.id.uuidString {
+                                    moduleManager.deleteModule(module)
+                                    DropManager.shared.showDrop(title: "Module Removed", subtitle: "", duration: 1.0, icon: UIImage(systemName: "trash"))
+                                }
                             } label: {
                                 Label("Delete", systemImage: "trash")
+                            }
+                            .disabled(selectedModuleId == module.id.uuidString)
+                        }
+                        .swipeActions {
+                            if selectedModuleId != module.id.uuidString {
+                                Button(role: .destructive) {
+                                    moduleManager.deleteModule(module)
+                                    DropManager.shared.showDrop(title: "Module Removed", subtitle: "", duration: 1.0, icon: UIImage(systemName: "trash"))
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
                             }
                         }
                     }
@@ -127,31 +142,25 @@ struct SettingsViewModule: View {
     private func addModule(from url: String) {
         isLoading = true
         errorMessage = nil
-        addedModuleUrl = url
         
         Task {
             do {
                 _ = try await moduleManager.addModule(metadataUrl: url)
                 DispatchQueue.main.async {
                     isLoading = false
-                    showDrop()
+                    DropManager.shared.showDrop(title: "Module Added", subtitle: "clicking it to select it", duration: 2.0, icon: UIImage(systemName: "app.badge.checkmark"))
                 }
             } catch {
                 DispatchQueue.main.async {
                     isLoading = false
-                    errorMessage = "Failed to add module: \(error.localizedDescription)"
+                    if (error as NSError).domain == "Module already exists" {
+                        errorMessage = "Module already exists"
+                    } else {
+                        errorMessage = "Failed to add module: \(error.localizedDescription)"
+                    }
                     Logger.shared.log("Failed to add module: \(error.localizedDescription)")
                 }
             }
         }
-    }
-    
-    private func showDrop() {
-        let aTitle = "Module Added!"
-        let subtitle = "clicking it to select it"
-        let duration = 2.0
-        let icon = UIImage(systemName: "app.badge.checkmark")
-        
-        DropManager.shared.showDrop(title: aTitle, subtitle: subtitle, duration: duration, icon: icon)
     }
 }

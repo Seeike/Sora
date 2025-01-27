@@ -89,13 +89,6 @@ struct EpisodeCell: View {
     }
     
     func fetchEpisodeDetails() {
-        let cacheKey = "episodeDetails_\(itemID)_\(episodeID)"
-        
-        if let cachedData = UserDefaults.standard.data(forKey: cacheKey) {
-            parseEpisodeDetails(data: cachedData)
-            return
-        }
-        
         guard let url = URL(string: "https://api.ani.zip/mappings?anilist_id=\(itemID)") else {
             isLoading = false
             return
@@ -117,39 +110,30 @@ struct EpisodeCell: View {
                 return
             }
             
-            DispatchQueue.main.async {
-                self.parseEpisodeDetails(data: data)
-                UserDefaults.standard.set(data, forKey: cacheKey)
-                self.isLoading = false
+            do {
+                let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
+                guard let json = jsonObject as? [String: Any],
+                      let episodes = json["episodes"] as? [String: Any],
+                      let episodeDetails = episodes["\(episodeID + 1)"] as? [String: Any],
+                      let title = episodeDetails["title"] as? [String: String],
+                      let image = episodeDetails["image"] as? String else {
+                          Logger.shared.log("Invalid response format", type: "Error")
+                          DispatchQueue.main.async {
+                              self.isLoading = false
+                          }
+                          return
+                      }
+                
+                DispatchQueue.main.async {
+                    self.episodeTitle = title["en"] ?? ""
+                    self.episodeImageUrl = image
+                    self.isLoading = false
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                }
             }
         }.resume()
-    }
-    
-    func parseEpisodeDetails(data: Data) {
-        do {
-            let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
-            guard let json = jsonObject as? [String: Any],
-                  let episodes = json["episodes"] as? [String: Any],
-                  let episodeDetails = episodes["\(episodeID + 1)"] as? [String: Any],
-                  let title = episodeDetails["title"] as? [String: String],
-                  let image = episodeDetails["image"] as? String else {
-                      Logger.shared.log("Invalid response format", type: "Error")
-                      DispatchQueue.main.async {
-                          self.isLoading = false
-                      }
-                      return
-                  }
-            
-            DispatchQueue.main.async {
-                self.episodeTitle = title["en"] ?? ""
-                self.episodeImageUrl = image
-                self.isLoading = false
-            }
-        } catch {
-            Logger.shared.log("Failed to parse JSON: \(error)", type: "Error")
-            DispatchQueue.main.async {
-                self.isLoading = false
-            }
-        }
     }
 }
