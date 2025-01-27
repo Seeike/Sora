@@ -27,7 +27,7 @@ A modular web scraping app, under the GPLv3.0 License
 ## Frequently Asked Questions
 
 1. **What is Sora?**
-Sora is a module based web scraping app, made to work with modules only
+Sora is a module based web scraping app, made to work with modules only.
 
 2. **Is Sora safe?**
 Yes, Sora is open-source and does not store user data on external servers.
@@ -36,7 +36,7 @@ Yes, Sora is open-source and does not store user data on external servers.
 No, Sora will always remain free without subscriptions, paid content, or any type of login.
 
 4. **How can i get module?**
-I do not provide any module for the app and so the app is not installed with any module. Search for them on google or i dont know.
+Sora does not include any modules by default. You will need to find and add the necessary modules yourself.
 
 ## Acknowledgements
 
@@ -67,7 +67,7 @@ along with Sora. If not, see <https://www.gnu.org/licenses/>.
 
 ## Legal
 
-**_Sora is not made for Piracy! I don't promote piracy at all!_**
+**_Sora is not made for Piracy! The Sora project does not condone any form of piracy._**
 
 ### No Liability
 
@@ -75,7 +75,7 @@ The developer(s) of this software assumes no liability for damages, legal claims
 
 ### Third-Party Websites and Intellectual Property
 
-This software is not affiliated with or endorsed by any third-party websites. Any references to third-party sites in user-generated modules do not imply endorsement. Users are responsible for verifying that their scraping activities comply with the terms of service and intellectual property rights of the sites they interact with.
+This software is not affiliated with or endorsed by any third-party entity. Any references to third-party sites in user-generated modules do not imply endorsement. Users are responsible for verifying that their scraping activities comply with the terms of service and intellectual property rights of the sites they interact with.
 
 ### DMCA
 

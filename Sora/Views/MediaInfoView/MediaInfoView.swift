@@ -32,6 +32,7 @@ struct MediaInfoView: View {
     @State var showFullSynopsis: Bool = false
     @State var hasFetched: Bool = false
     @State var isRefetching: Bool = true
+    @State var isFetchingEpisode: Bool = false
     
     @AppStorage("externalPlayer") private var externalPlayer: String = "Default"
     @AppStorage("episodeChunkSize") private var episodeChunkSize: Int = 100
@@ -199,9 +200,13 @@ struct MediaInfoView: View {
                                     
                                     EpisodeCell(episode: ep.href, episodeID: ep.number - 1, progress: progress, itemID: itemID ?? 0)
                                         .onTapGesture {
-                                            fetchStream(href: ep.href)
-                                            DropManager.shared.showDrop(title: "Fetching Stream", subtitle: "", duration: 1.0, icon: UIImage(systemName: "arrow.triangle.2.circlepath"))
+                                            if !isFetchingEpisode {
+                                                isFetchingEpisode = true
+                                                fetchStream(href: ep.href)
+                                                DropManager.shared.showDrop(title: "Fetching Stream", subtitle: "", duration: 1.0, icon: UIImage(systemName: "arrow.triangle.2.circlepath"))
+                                            }
                                         }
+                                        .disabled(isFetchingEpisode)
                                 }
                             }
                         } else {
@@ -326,6 +331,7 @@ struct MediaInfoView: View {
                                 return
                             }
                             playStream(url: url, fullURL: href)
+                            isFetchingEpisode = false
                         }
                     } else {
                         jsController.fetchStreamUrl(episodeUrl: href) { streamUrl in
@@ -334,10 +340,12 @@ struct MediaInfoView: View {
                                 return
                             }
                             playStream(url: url, fullURL: href)
+                            isFetchingEpisode = false
                         }
                     }
                 } catch {
                     handleStreamFailure(error: error)
+                    isFetchingEpisode = false
                 }
             }
         }
